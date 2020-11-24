@@ -6,6 +6,9 @@ Created on Fri Oct 16 00:05:14 2020
 @author: emanuel
 """
 
+# =============================================================================
+# Load libraries
+# =============================================================================
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -13,6 +16,10 @@ import itertools
 import json
 import pandas as pd
 
+
+# =============================================================================
+# Define functions
+# =============================================================================
 def remove_single_quotes(text):
     """
     Simple helper function that replaces single quotes with double quotes
@@ -23,7 +30,6 @@ def remove_single_quotes(text):
     pattern_2 = re.compile(r"\'(?=:|,|\})")
     step_1 = pattern_1.sub('\"', text)
     return pattern_2.sub('\"', step_1)
-
 
 
 def remove_newlines(text):
@@ -52,11 +58,14 @@ def extract_zip_code(text):
 
 def extract_dictionary_items(record):
     return {'zip_code' if k == 'desc' else k:
-            extract_zip_code(v) if k =='desc' else v
+            extract_zip_code(v) if k == 'desc' else v
             for k, v in record.items()}
 
 
 def extract_data(response):
+    """
+    Extract the Starbucks location data from a single page of city-data.com
+    """
     html = response.text
     soup = BeautifulSoup(html, 'html5lib')
     script_tags = soup.find("script", string=re.compile("starbucks")).string
@@ -77,27 +86,34 @@ def extract_data(response):
 
     return output
 
-base_url = "http://www.city-data.com/locations/Starbucks/Los-Angeles-California"
-ending = ".html"
-output = list()
 
-for i in itertools.count(1):
-    if i == 1:
-        page_number = ""
-    else:
-        page_number = f"-{i}"
+def main():
 
-    url = base_url + page_number + ending
-    response = requests.get(url)
-    if response.status_code != 200:
-        break
-    else:
-        output += extract_data(response)
+    base_url = "http://www.city-data.com/locations/Starbucks/Los-Angeles-" \
+               "California"
+    ending = ".html"
+    output = list()
 
-starbucks = pd.DataFrame(output)
-print(starbucks)
+    for i in itertools.count(1):
+        if i == 1:
+            page_number = ""
+        else:
+            page_number = f"-{i}"
 
-for col in ['lat', 'lon']:
-    starbucks[col] = pd.to_numeric(starbucks[col])
+        url = base_url + page_number + ending
+        response = requests.get(url)
+        if response.status_code != 200:
+            break
+        else:
+            output += extract_data(response)
 
-starbucks.to_csv("starbucks.csv")
+    starbucks = pd.DataFrame(output)
+
+    for col in ['lat', 'lon']:
+        starbucks[col] = pd.to_numeric(starbucks[col])
+
+    starbucks.to_csv("starbucks.csv")
+
+
+if __name__ == "__main__":
+    main()
