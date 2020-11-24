@@ -10,3 +10,8 @@ no response or an error.
 The scraped data is then processed to extract the portion that contains
 the actual locations. They are cleaned and transfered to a Pandas dataframe
 that is then written to a csv-file.
+
+To run the script simply type:  
+`python3 extract_starbucks_data.py`
+
+After a few seconds (or more) a new file called `starbucks.csv` should appear in the folder.
